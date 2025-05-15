@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS answers (
     question_key TEXT NOT NULL,
     step INT NOT NULL,
     answer TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

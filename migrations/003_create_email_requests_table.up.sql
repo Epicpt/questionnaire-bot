@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS email_requests (
     status TEXT DEFAULT 'pending' CHECK (
         status IN ('pending', 'sent', 'failed')
     ),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    sent_at TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sent_at TIMESTAMPTZ
 );
