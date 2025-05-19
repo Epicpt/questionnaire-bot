@@ -22,6 +22,7 @@ type (
 		ID          int
 		UserTgID    int64
 		QuestionKey string
+		Short       string
 		Step        int
 		UserAnswer  string
 		CreatedAt   time.Time
@@ -36,3 +37,7 @@ type (
 		SentAt    time.Time
 	}
 )
+
+func New(tgID, chatID int64, firstName, lastName, userName string) *User {
+	return &User{TgID: tgID, ChatID: chatID, FirstName: firstName, LastName: lastName, Username: userName}
+}

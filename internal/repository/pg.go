@@ -8,6 +8,9 @@ import (
 type Repository interface {
 	GetUser(int64) (*entity.User, error)
 	SaveUser(*entity.User) error
+	SaveAnswer(*entity.Answer) error
+	GetAnswersUser(int64) ([]entity.Answer, error)
+	SaveEmail(*entity.Email) error
 }
 
 type BotRepo struct {

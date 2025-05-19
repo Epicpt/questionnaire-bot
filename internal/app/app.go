@@ -2,9 +2,11 @@ package app
 
 import (
 	"questionnaire-bot/internal/config"
+	"questionnaire-bot/internal/repository"
+	"questionnaire-bot/internal/telegram"
+	"questionnaire-bot/internal/usecase"
 	"questionnaire-bot/pkg/logger"
 	"questionnaire-bot/pkg/postgres"
-	"questionnaire-bot/pkg/telegram"
 )
 
 func Run(cfg *config.Config) {
@@ -23,10 +25,11 @@ func Run(cfg *config.Config) {
 	//go monitoring.StartMetricsServer(os.Getenv("METRICS_SERVER_ADDR"))
 
 	// usecase
+	usecase := usecase.New(repository.New(pg))
 
 	// workers
 
-	bot, err := telegram.New(cfg.Bot.Token, l)
+	bot, err := telegram.New(cfg.Bot.Token, l, usecase)
 	if err != nil {
 		l.Fatal().Err(err).Msg("Failed initialized bot")
 	}

@@ -8,11 +8,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Logger struct {
-	zerolog.Logger
-}
-
-func New(level string) *Logger {
+func New(level string) zerolog.Logger {
 	logLevel, err := zerolog.ParseLevel(strings.ToLower(level))
 	if err != nil {
 		logLevel = zerolog.InfoLevel
@@ -26,5 +22,5 @@ func New(level string) *Logger {
 
 	logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
-	return &Logger{logger}
+	return logger
 }

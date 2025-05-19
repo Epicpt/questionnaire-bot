@@ -11,9 +11,9 @@ var _ Repository = (*BotRepo)(nil)
 
 const (
 	querySaveUser = `
-		INSERT INTO users (tg_id, chat_id, first_name, last_name, username, created_at, updated_at, remind_stage,remind_at,is_completed,current_step,max_step_reached) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-		ON CONFLICT (tg_id) DO UPDATE SET updated_at = $7, remind_stage = $8, remind_at = $9, is_completed = $10, current_step = $11, max_step_reached = $12`
+		INSERT INTO users (tg_id, chat_id, first_name, last_name, username, remind_stage,remind_at,is_completed,current_step,max_step_reached) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+		ON CONFLICT (tg_id) DO UPDATE SET updated_at = NOW(), remind_stage = $6, remind_at = $7, is_completed = $8, current_step = $9, max_step_reached = $10`
 
 	queryGetUser = `
 		SELECT tg_id, chat_id, first_name, last_name, username, created_at, updated_at, remind_stage,remind_at,is_completed,current_step,max_step_reached
@@ -23,7 +23,7 @@ const (
 
 func (r *BotRepo) SaveUser(u *entity.User) error {
 	_, err := r.Pool.Exec(context.Background(), querySaveUser,
-		u.TgID, u.ChatID, u.FirstName, u.LastName, u.Username, u.CreatedAt, u.UpdatedAt, u.RemindStage, u.RemindAt, u.IsCompleted, u.CurrentStep, u.MaxStepReached)
+		u.TgID, u.ChatID, u.FirstName, u.LastName, u.Username, u.RemindStage, u.RemindAt, u.IsCompleted, u.CurrentStep, u.MaxStepReached)
 	if err != nil {
 		return err
 	}
