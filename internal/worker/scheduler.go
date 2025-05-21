@@ -33,7 +33,7 @@ type tickers struct {
 	notify      *time.Ticker
 }
 
-func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler) *Scheduler {
+func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier telegram.Notifier) *Scheduler {
 	return &Scheduler{
 		u: u,
 		l: l,
@@ -42,6 +42,7 @@ func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler) *Scheduler {
 			failedEmail: time.NewTicker(cfg.EmailErrSend),
 			notify:      time.NewTicker(cfg.NotifySend)},
 		stopChannel: make(chan struct{}),
+		notifier:    notifier,
 	}
 }
 
@@ -140,7 +141,7 @@ func (s *Scheduler) processNotify() {
 
 	for _, user := range users {
 		q := telegram.Questions[user.CurrentStep]
-		msg := fmt.Sprintf("👋 Похоже, вы не закончили заполнение анкеты.\nВаш последний вопрос был:\n\n*%s*", q.Text)
+		msg := fmt.Sprintf("👋 Похоже, вы не закончили заполнение анкеты.\nВаш последний вопрос был:\n\n%s", q.Text)
 
 		s.notifier.Send(user.ChatID, msg, telegram.KeyboardFromOptions(q, user.CurrentStep > 0))
 		user.RemindStage++
@@ -153,6 +154,7 @@ func (s *Scheduler) processNotify() {
 			s.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
 		}
 	}
-
-	s.l.Info().Msgf("Notify sent to %d users", len(users))
+	if len(users) > 0 {
+		s.l.Info().Msgf("Notify sent to %d users", len(users))
+	}
 }

@@ -29,16 +29,17 @@ func Run(cfg *config.Config) {
 	// usecase
 	usecase := usecase.New(repository.New(pg), smtp.New(cfg.Smtp))
 
-	// workers
-	worker := worker.New(usecase, l, cfg.Scheduler)
-	worker.Start()
-	defer worker.Stop()
-
 	bot, err := telegram.New(cfg.Bot.Token, l, usecase, cfg.Bot.AdminID)
 	if err != nil {
 		l.Fatal().Err(err).Msg("Failed initialized bot")
 	}
 	l.Info().Msg("Bot initialized")
+
+	// worker
+	worker := worker.New(usecase, l, cfg.Scheduler, bot)
+	worker.Start()
+	defer worker.Stop()
+	l.Info().Msg("Worker started")
 
 	l.Info().Msg("Bot started")
 	bot.Start()
