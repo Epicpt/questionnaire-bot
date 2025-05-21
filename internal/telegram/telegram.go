@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"errors"
+	"fmt"
 	"questionnaire-bot/internal/entity"
 	"questionnaire-bot/internal/usecase"
 
@@ -9,18 +10,24 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Telegram struct {
-	Bot *tgbotapi.BotAPI
-	l   zerolog.Logger
-	u   usecase.Usecase
+type Notifier interface {
+	SendToAdmin(msg string)
+	Send(int64, string, any)
 }
 
-func New(token string, l zerolog.Logger, u usecase.Usecase) (*Telegram, error) {
+type Telegram struct {
+	Bot     *tgbotapi.BotAPI
+	l       zerolog.Logger
+	u       usecase.Usecase
+	adminID int64
+}
+
+func New(token string, l zerolog.Logger, u usecase.Usecase, adminID int64) (*Telegram, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
-	return &Telegram{Bot: bot, l: l, u: u}, nil
+	return &Telegram{Bot: bot, l: l, u: u, adminID: adminID}, nil
 }
 
 func (t *Telegram) Start() {
@@ -33,7 +40,20 @@ func (t *Telegram) Start() {
 			continue
 		}
 
-		t.Update(update)
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.l.Warn().Interface("panic", r).
+						Str("text", update.Message.Text).
+						Int64("user_id", update.Message.From.ID).
+						Msg("Паника в обработке сообщения")
+
+					t.Send(t.adminID, fmt.Sprintf("Произошла ошибка в обработке сообщения от пользователя %d:\n%v", update.Message.From.ID, r), nil)
+				}
+			}()
+			t.Update(update)
+		}()
+
 	}
 }
 
@@ -58,7 +78,7 @@ func (t *Telegram) Update(update tgbotapi.Update) {
 	user.MaxStepReached = max(user.MaxStepReached, user.CurrentStep) // todo: add metric
 
 	if err = t.u.SaveUser(user); err != nil {
-		t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя в хранилище")
+		t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
 	}
 
 }
@@ -71,4 +91,9 @@ func (t *Telegram) Send(chatID int64, text string, keyboard any) {
 	if err != nil {
 		t.l.Error().Err(err).Int64("chatID", chatID).Str("msg", text).Msg("Ошибка отправки сообщения")
 	}
+}
+
+func (t *Telegram) SendToAdmin(msg string) {
+	adminID := t.adminID
+	t.Send(adminID, msg, nil)
 }

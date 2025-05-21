@@ -6,7 +6,7 @@ import (
 
 const telegramPhone = "📱 Отправить Telegram-номер"
 
-func keyboardFromOptions(q Question, showBack bool) any {
+func KeyboardFromOptions(q Question, showBack bool) any {
 	var keyboard [][]tgbotapi.KeyboardButton
 
 	for _, opt := range q.Options {

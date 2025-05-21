@@ -5,8 +5,10 @@ import (
 	"questionnaire-bot/internal/repository"
 	"questionnaire-bot/internal/telegram"
 	"questionnaire-bot/internal/usecase"
+	"questionnaire-bot/internal/worker"
 	"questionnaire-bot/pkg/logger"
 	"questionnaire-bot/pkg/postgres"
+	"questionnaire-bot/pkg/smtp"
 )
 
 func Run(cfg *config.Config) {
@@ -22,14 +24,17 @@ func Run(cfg *config.Config) {
 	l.Info().Msg("PostgreSQL initialized")
 
 	//metrics
-	//go monitoring.StartMetricsServer(os.Getenv("METRICS_SERVER_ADDR"))
+	//go monitoring.StartMetricsServer(cfg)
 
 	// usecase
-	usecase := usecase.New(repository.New(pg))
+	usecase := usecase.New(repository.New(pg), smtp.New(cfg.Smtp))
 
 	// workers
+	worker := worker.New(usecase, l, cfg.Scheduler)
+	worker.Start()
+	defer worker.Stop()
 
-	bot, err := telegram.New(cfg.Bot.Token, l, usecase)
+	bot, err := telegram.New(cfg.Bot.Token, l, usecase, cfg.Bot.AdminID)
 	if err != nil {
 		l.Fatal().Err(err).Msg("Failed initialized bot")
 	}

@@ -88,14 +88,20 @@ var Questions = []Question{
 	},
 }
 
-func (t *Telegram) processMessage(user *entity.User, text string) {
+func remindUser(user *entity.User) *entity.User {
 	now := time.Now().UTC()
+	user.RemindStage = startRemind
+	user.RemindAt = now.Add(remindTime)
+	return user
+}
+
+func (t *Telegram) processMessage(user *entity.User, text string) {
 
 	if text == startButton {
 		user.CurrentStep = 0
 		user.IsCompleted = false // для повторного прохождения
-		user.RemindStage = startRemind
-		user.RemindAt = now.Add(remindTime)
+
+		user = remindUser(user)
 
 		t.sendNextQuestion(user)
 		return
@@ -108,7 +114,8 @@ func (t *Telegram) processMessage(user *entity.User, text string) {
 
 	if text == backButton && user.CurrentStep >= 1 {
 		user.CurrentStep--
-		user.RemindAt = now.Add(remindTime)
+
+		user = remindUser(user)
 
 		t.sendNextQuestion(user)
 		return
@@ -123,7 +130,7 @@ func (t *Telegram) processMessage(user *entity.User, text string) {
 	q := Questions[step]
 	if q.Validator != nil {
 		if err := q.Validator(text); err != nil {
-			t.Send(user.ChatID, fmt.Sprintf("%v", err), keyboardFromOptions(q, user.CurrentStep > 0))
+			t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(q, user.CurrentStep > 0))
 			return
 		}
 	}
@@ -151,9 +158,9 @@ func (t *Telegram) processContact(user *entity.User, phone string) {
 }
 
 func (t *Telegram) advanceStep(user *entity.User) {
-	now := time.Now().UTC()
 	user.CurrentStep++
-	user.RemindAt = now.Add(remindTime)
+
+	user = remindUser(user)
 
 	if user.CurrentStep >= len(Questions) {
 		t.finishSurvey(user)
@@ -165,7 +172,7 @@ func (t *Telegram) advanceStep(user *entity.User) {
 
 func (t *Telegram) sendNextQuestion(user *entity.User) {
 	q := Questions[user.CurrentStep]
-	t.Send(user.ChatID, q.Text, keyboardFromOptions(q, user.CurrentStep > 0))
+	t.Send(user.ChatID, q.Text, KeyboardFromOptions(q, user.CurrentStep > 0))
 }
 
 func (t *Telegram) finishSurvey(user *entity.User) {

@@ -15,7 +15,7 @@ func (u *BotService) CreateEmail(user *entity.User) error {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Новая заявка: \n\n---Внутренние данные телеграмм---"))
+	sb.WriteString(fmt.Sprintf("Новая заявка: \n\n---Внутренние данные телеграмм---\n"))
 
 	if user.FirstName != "" {
 		sb.WriteString(fmt.Sprintf("* Имя: %s\n", user.FirstName))
@@ -43,4 +43,16 @@ func (u *BotService) CreateEmail(user *entity.User) error {
 	}
 
 	return nil
+}
+
+func (u *BotService) GetEmailsByStatus(s string) ([]entity.Email, error) {
+	return u.repo.GetEmailsByStatus(s)
+}
+
+func (u *BotService) SendEmail(email *entity.Email) error {
+	return u.smtp.Send(email)
+}
+
+func (u *BotService) UpdateEmailStatus(email *entity.Email, status string) error {
+	return u.repo.UpdateEmailStatus(email, status)
 }

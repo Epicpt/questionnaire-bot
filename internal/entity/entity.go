@@ -34,7 +34,7 @@ type (
 		Body      string
 		Status    string
 		CreatedAt time.Time
-		SentAt    time.Time
+		UpdatedAt time.Time
 	}
 )
 

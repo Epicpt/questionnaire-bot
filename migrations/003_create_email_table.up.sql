@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS emails (
         status IN ('pending', 'sent', 'failed')
     ),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    sent_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

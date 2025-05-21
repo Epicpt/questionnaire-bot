@@ -11,6 +11,9 @@ type Repository interface {
 	SaveAnswer(*entity.Answer) error
 	GetAnswersUser(int64) ([]entity.Answer, error)
 	SaveEmail(*entity.Email) error
+	GetEmailsByStatus(string) ([]entity.Email, error)
+	UpdateEmailStatus(*entity.Email, string) error
+	GetUsersForNotify() ([]entity.User, error)
 }
 
 type BotRepo struct {
