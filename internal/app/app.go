@@ -2,13 +2,14 @@ package app
 
 import (
 	"questionnaire-bot/internal/config"
+	"questionnaire-bot/internal/handler"
 	"questionnaire-bot/internal/repository"
-	"questionnaire-bot/internal/telegram"
 	"questionnaire-bot/internal/usecase"
 	"questionnaire-bot/internal/worker"
 	"questionnaire-bot/pkg/logger"
 	"questionnaire-bot/pkg/postgres"
 	"questionnaire-bot/pkg/smtp"
+	"questionnaire-bot/pkg/telegram"
 )
 
 func Run(cfg *config.Config) {
@@ -29,10 +30,11 @@ func Run(cfg *config.Config) {
 	// usecase
 	usecase := usecase.New(repository.New(pg), smtp.New(cfg.Smtp))
 
-	bot, err := telegram.New(cfg.Bot.Token, l, usecase, cfg.Bot.AdminID)
+	botAPI, err := telegram.New(cfg.Bot.Token)
 	if err != nil {
 		l.Fatal().Err(err).Msg("Failed initialized bot")
 	}
+	bot := handler.New(botAPI, l, usecase, cfg.Bot.AdminID)
 	l.Info().Msg("Bot initialized")
 
 	// worker

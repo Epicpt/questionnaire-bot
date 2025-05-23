@@ -1,37 +1,39 @@
-package telegram
+package handler
 
 import (
 	"errors"
 	"fmt"
 	"questionnaire-bot/internal/entity"
 	"questionnaire-bot/internal/usecase"
+	"questionnaire-bot/pkg/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/rs/zerolog"
 )
 
-type Notifier interface {
-	SendToAdmin(msg string)
+type Handler interface {
+	SendToAdmin(string)
 	Send(int64, string, any)
+	AdvanceStep(*entity.User)
+	SendNextQuestion(*entity.User)
+	FinishSurvey(*entity.User)
+	ProcessMessage(*entity.User, string)
+	ProcessContact(*entity.User, string)
 }
 
-type Telegram struct {
-	Bot     *tgbotapi.BotAPI
+type BotHandler struct {
+	Bot     telegram.Telegram
 	l       zerolog.Logger
 	u       usecase.Usecase
 	adminID int64
 }
 
-func New(token string, l zerolog.Logger, u usecase.Usecase, adminID int64) (*Telegram, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
-	if err != nil {
-		return nil, err
-	}
-	return &Telegram{Bot: bot, l: l, u: u, adminID: adminID}, nil
+func New(bot telegram.Telegram, l zerolog.Logger, u usecase.Usecase, adminID int64) *BotHandler {
+	return &BotHandler{Bot: bot, l: l, u: u, adminID: adminID}
 }
 
-func (t *Telegram) Start() {
-	u := tgbotapi.NewUpdate(0)
+func (t *BotHandler) Start() {
+	u := t.Bot.NewUpdate(0)
 	u.Timeout = 60
 	updates := t.Bot.GetUpdatesChan(u)
 
@@ -57,7 +59,7 @@ func (t *Telegram) Start() {
 	}
 }
 
-func (t *Telegram) Update(update tgbotapi.Update) {
+func (t *BotHandler) Update(update tgbotapi.Update) {
 	user, err := t.u.GetUser(update.Message.From.ID)
 	if err != nil {
 		if errors.Is(err, usecase.ErrUserNotFound) {
@@ -70,9 +72,9 @@ func (t *Telegram) Update(update tgbotapi.Update) {
 	}
 
 	if update.Message.Contact != nil {
-		t.processContact(user, update.Message.Contact.PhoneNumber)
+		t.ProcessContact(user, update.Message.Contact.PhoneNumber)
 	} else {
-		t.processMessage(user, update.Message.Text)
+		t.ProcessMessage(user, update.Message.Text)
 	}
 
 	user.MaxStepReached = max(user.MaxStepReached, user.CurrentStep) // todo: add metric
@@ -83,8 +85,8 @@ func (t *Telegram) Update(update tgbotapi.Update) {
 
 }
 
-func (t *Telegram) Send(chatID int64, text string, keyboard any) {
-	msg := tgbotapi.NewMessage(chatID, text)
+func (t *BotHandler) Send(chatID int64, text string, keyboard any) {
+	msg := t.Bot.NewMessage(chatID, text)
 	msg.ParseMode = "HTML"
 	msg.ReplyMarkup = keyboard
 	_, err := t.Bot.Send(msg)
@@ -93,7 +95,6 @@ func (t *Telegram) Send(chatID int64, text string, keyboard any) {
 	}
 }
 
-func (t *Telegram) SendToAdmin(msg string) {
-	adminID := t.adminID
-	t.Send(adminID, msg, nil)
+func (t *BotHandler) SendToAdmin(msg string) {
+	t.Send(t.adminID, msg, nil)
 }

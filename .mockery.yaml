@@ -1,0 +1,24 @@
+with-expecter: true
+
+packages:
+  questionnaire-bot/internal/usecase:
+    interfaces:
+      Usecase:
+        config:
+          dir: ./internal/mocks  
+          outpkg: mocks
+          filename: use_case_mock.go
+  questionnaire-bot/internal/handler:
+    interfaces:
+      Handler:
+        config:
+          dir: ./internal/mocks  
+          outpkg: mocks
+          filename: handler_case_mock.go
+  questionnaire-bot/pkg/telegram:
+    interfaces:
+      Telegram:
+        config:
+          dir: ./internal/mocks  
+          outpkg: mocks
+          filename: telegram_case_mock.go

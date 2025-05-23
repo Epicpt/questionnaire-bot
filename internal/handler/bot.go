@@ -1,4 +1,4 @@
-package telegram
+package handler
 
 import (
 	"fmt"
@@ -17,11 +17,11 @@ type Question struct {
 
 const (
 	remindTime  = time.Hour
-	notRemind   = 2 // dont send notification
-	startRemind = 0
+	NotRemind   = 2 // dont send notification
+	StartRemind = 0
 
-	backButton  = "⬅️ Назад"
-	startButton = "/start"
+	BackButton  = "⬅️ Назад"
+	StartButton = "/start"
 
 	requestPhone = "request_phone"
 
@@ -39,50 +39,46 @@ var Questions = []Question{
 	{
 		Key: "name", Text: `Давайте познакомимся.
 Уточните пожалуйста как Вас зовут?`,
-		Validator: validateName,
+		Validator: ValidateName,
 		Short:     "Имя",
 	},
 	{
 		Key: "object", Text: `Что у вас за объект?`,
-		Options:   objectOpt,
-		Validator: validateObject,
-		Short:     "Вид объекта",
+		Options: objectOpt,
+		Short:   "Вид объекта",
 	},
 	{
 		Key: "area", Text: `Какая площадь объекта?`,
-		Validator: validateArea,
+		Validator: ValidateArea,
 		Short:     "Площадь",
 	},
 	{
 		Key: "city", Text: `В каком городе находится объект?`,
-		Validator: validateCity,
+		Validator: ValidateCity,
 		Short:     "Город",
 	},
 	{
 		Key: "renovation", Text: `Какой ремонт потребуется?`,
-		Options:   renovationOpt,
-		Validator: validateRenovation,
-		Short:     "Вид ремонта",
+		Options: renovationOpt,
+		Short:   "Вид ремонта",
 	},
 	{
 		Key: "equipment", Text: `Нужна ли будет комплектация объекта во время ремонта?
 
 Комплектация - это подбор мебели, светильников, декора, а также закупка всего необходимого для ремонта (сантехника, материалы, мебель, свтеильники и т.д.)`,
-		Options:   equipmentOpt,
-		Validator: validateEquipment,
-		Short:     "Необходима комплектация",
+		Options: equipmentOpt,
+		Short:   "Необходима комплектация",
 	},
 	{
 		Key: "connection", Text: `Для уточнения дополнительных деталей проекта, рекомендуем связаться с нашим менеджером, чтобы подробно обсудить будущий дизайн-проект
 	
 	Какой способ связи для вас наиболее удобный?`,
-		Options:   connectionOpt,
-		Validator: validateConnection,
-		Short:     "Способ связи",
+		Options: connectionOpt,
+		Short:   "Способ связи",
 	},
 	{
 		Key: "phone", Text: `Оставьте свой номер телефона и наш менеджер свяжется с Вами в ближайшее время`,
-		Validator:       validatePhone,
+		Validator:       ValidatePhone,
 		SpecialKeyboard: requestPhone,
 		Short:           "Номер телефона",
 	},
@@ -90,20 +86,20 @@ var Questions = []Question{
 
 func remindUser(user *entity.User) *entity.User {
 	now := time.Now().UTC()
-	user.RemindStage = startRemind
+	user.RemindStage = StartRemind
 	user.RemindAt = now.Add(remindTime)
 	return user
 }
 
-func (t *Telegram) processMessage(user *entity.User, text string) {
+func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 
-	if text == startButton {
+	if text == StartButton {
 		user.CurrentStep = 0
 		user.IsCompleted = false // для повторного прохождения
 
 		user = remindUser(user)
 
-		t.sendNextQuestion(user)
+		t.SendNextQuestion(user)
 		return
 	}
 
@@ -112,37 +108,47 @@ func (t *Telegram) processMessage(user *entity.User, text string) {
 		return
 	}
 
-	if text == backButton && user.CurrentStep >= 1 {
+	if text == BackButton && user.CurrentStep >= 1 {
 		user.CurrentStep--
 
 		user = remindUser(user)
 
-		t.sendNextQuestion(user)
+		t.SendNextQuestion(user)
 		return
 	}
 
 	step := user.CurrentStep
 	if step >= len(Questions) {
-		t.finishSurvey(user)
+		t.FinishSurvey(user)
 		return
 	}
 
 	q := Questions[step]
-	if q.Validator != nil {
-		if err := q.Validator(text); err != nil {
-			t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(q, user.CurrentStep > 0))
-			return
-		}
+
+	var err error
+	if q.Options != nil {
+		err = ValidateChoose(text, q.Options)
+	} else {
+		err = q.Validator(text)
 	}
+	if err != nil {
+		t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(q, user.CurrentStep > 0))
+		return
+	}
+
 	answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: step, UserAnswer: text, Short: q.Short}
-	t.u.SaveAnswer(answer)
+	if err := t.u.SaveAnswer(answer); err != nil {
+		t.l.Err(err).Msg("failed to save answer")
+		t.SendToAdmin(adminMessage())
+		return
+	}
 
 	t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
 
-	t.advanceStep(user)
+	t.AdvanceStep(user)
 }
 
-func (t *Telegram) processContact(user *entity.User, phone string) {
+func (t *BotHandler) ProcessContact(user *entity.User, phone string) {
 
 	if user.IsCompleted {
 		t.Send(user.ChatID, completedText, nil)
@@ -150,37 +156,47 @@ func (t *Telegram) processContact(user *entity.User, phone string) {
 	}
 	q := Questions[user.CurrentStep]
 	answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: user.CurrentStep, UserAnswer: phone, Short: q.Short}
-	t.u.SaveAnswer(answer)
+	if err := t.u.SaveAnswer(answer); err != nil {
+		t.l.Err(err).Msg("failed to save answer")
+		t.SendToAdmin(adminMessage())
+		return
+	}
 
 	t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
 
-	t.advanceStep(user)
+	t.AdvanceStep(user)
 }
 
-func (t *Telegram) advanceStep(user *entity.User) {
+func (t *BotHandler) AdvanceStep(user *entity.User) {
 	user.CurrentStep++
 
 	user = remindUser(user)
 
 	if user.CurrentStep >= len(Questions) {
-		t.finishSurvey(user)
+		t.FinishSurvey(user)
 		return
 	}
 
-	t.sendNextQuestion(user)
+	t.SendNextQuestion(user)
 }
 
-func (t *Telegram) sendNextQuestion(user *entity.User) {
+func (t *BotHandler) SendNextQuestion(user *entity.User) {
 	q := Questions[user.CurrentStep]
 	t.Send(user.ChatID, q.Text, KeyboardFromOptions(q, user.CurrentStep > 0))
 }
 
-func (t *Telegram) finishSurvey(user *entity.User) {
+func (t *BotHandler) FinishSurvey(user *entity.User) {
 	user.IsCompleted = true
-	user.RemindStage = notRemind
+	user.RemindStage = NotRemind
 
 	if err := t.u.CreateEmail(user); err != nil {
 		t.l.Err(err).Msg("failed to create email")
+		t.SendToAdmin(adminMessage())
+		return
 	}
 	t.Send(user.ChatID, finishText, nil)
+}
+
+func adminMessage() string {
+	return fmt.Sprintf("❗️Проблемы с БД❗️\nВозможно Postgres упал в %v.", time.Now().UTC().Format(time.RFC3339))
 }

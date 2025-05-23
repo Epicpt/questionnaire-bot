@@ -3,7 +3,7 @@ package worker
 import (
 	"fmt"
 	"questionnaire-bot/internal/config"
-	"questionnaire-bot/internal/telegram"
+	"questionnaire-bot/internal/handler"
 	"questionnaire-bot/internal/usecase"
 	"time"
 
@@ -24,7 +24,7 @@ type Scheduler struct {
 	l           zerolog.Logger
 	tickers     tickers
 	stopChannel chan struct{}
-	notifier    telegram.Notifier
+	notifier    handler.Handler
 }
 
 type tickers struct {
@@ -33,7 +33,7 @@ type tickers struct {
 	notify      *time.Ticker
 }
 
-func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier telegram.Notifier) *Scheduler {
+func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier handler.Handler) *Scheduler {
 	return &Scheduler{
 		u: u,
 		l: l,
@@ -140,10 +140,10 @@ func (s *Scheduler) processNotify() {
 	}
 
 	for _, user := range users {
-		q := telegram.Questions[user.CurrentStep]
+		q := handler.Questions[user.CurrentStep]
 		msg := fmt.Sprintf("👋 Похоже, вы не закончили заполнение анкеты.\nВаш последний вопрос был:\n\n%s", q.Text)
 
-		s.notifier.Send(user.ChatID, msg, telegram.KeyboardFromOptions(q, user.CurrentStep > 0))
+		s.notifier.Send(user.ChatID, msg, handler.KeyboardFromOptions(q, user.CurrentStep > 0))
 		user.RemindStage++
 
 		if user.RemindStage == remindAfterDay {

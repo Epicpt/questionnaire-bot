@@ -1,4 +1,4 @@
-package telegram
+package handler
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -22,7 +22,7 @@ func KeyboardFromOptions(q Question, showBack bool) any {
 	}
 
 	if showBack {
-		keyboard = append(keyboard, tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton(backButton)))
+		keyboard = append(keyboard, tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton(BackButton)))
 	}
 
 	if len(keyboard) == 0 {
