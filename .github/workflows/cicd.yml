@@ -75,4 +75,5 @@ jobs:
             cd /opt/projects/bot_question
             git fetch origin main
             git checkout origin/main -- docker-compose.yml
+            git checkout origin/main -- migrations/
             docker-compose up -d --build
