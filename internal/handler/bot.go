@@ -194,6 +194,7 @@ func (t *BotHandler) FinishSurvey(user *entity.User) {
 		t.SendToAdmin(adminMessage())
 		return
 	}
+	user.EmailSentCnt++
 	t.Send(user.ChatID, finishText, nil)
 }
 

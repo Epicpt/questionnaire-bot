@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
     remind_at TIMESTAMPTZ NOT NULL,
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
     current_step INT NOT NULL DEFAULT 0,
-    max_step_reached INT NOT NULL DEFAULT 0
+    max_step_reached INT NOT NULL DEFAULT 0,
+    email_sent_count INT NOT NULL DEFAULT 0
 );

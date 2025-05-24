@@ -71,14 +71,16 @@ func TestBotProcessMessage(t *testing.T) {
 		{
 			desc: "user got finish survey",
 			user: &entity.User{
-				IsCompleted: false,
-				RemindStage: handler.StartRemind,
-				CurrentStep: len(handler.Questions),
+				IsCompleted:  false,
+				RemindStage:  handler.StartRemind,
+				CurrentStep:  len(handler.Questions),
+				EmailSentCnt: 0,
 			},
 			exeptUser: &entity.User{
-				IsCompleted: true,
-				RemindStage: handler.NotRemind,
-				CurrentStep: len(handler.Questions),
+				IsCompleted:  true,
+				RemindStage:  handler.NotRemind,
+				CurrentStep:  len(handler.Questions),
+				EmailSentCnt: 1,
 			},
 			text: "any",
 			setupMocks: func(t *mocks.MockTelegram, u *mocks.MockUsecase) {

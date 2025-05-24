@@ -71,13 +71,18 @@ func (t *BotHandler) Update(update tgbotapi.Update) {
 
 	}
 
+	if spamCheck(user.EmailSentCnt) {
+		t.Send(user.ChatID, fmt.Sprintf("Менеджер свяжется с Вами в ближайшее время!"), nil)
+		return
+	}
+
 	if update.Message.Contact != nil {
 		t.ProcessContact(user, update.Message.Contact.PhoneNumber)
 	} else {
 		t.ProcessMessage(user, update.Message.Text)
 	}
 
-	user.MaxStepReached = max(user.MaxStepReached, user.CurrentStep) // todo: add metric
+	user.MaxStepReached = max(user.MaxStepReached, user.CurrentStep)
 
 	if err = t.u.SaveUser(user); err != nil {
 		t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
@@ -97,4 +102,11 @@ func (t *BotHandler) Send(chatID int64, text string, keyboard any) {
 
 func (t *BotHandler) SendToAdmin(msg string) {
 	t.Send(t.adminID, msg, nil)
+}
+
+func spamCheck(cnt int) bool {
+	if cnt > 3 {
+		return true
+	}
+	return false
 }

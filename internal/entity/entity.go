@@ -16,6 +16,7 @@ type (
 		IsCompleted    bool
 		CurrentStep    int
 		MaxStepReached int
+		EmailSentCnt   int
 	}
 
 	Answer struct {

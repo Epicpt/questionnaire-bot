@@ -24,10 +24,6 @@ func Run(cfg *config.Config) {
 
 	l.Info().Msg("PostgreSQL initialized")
 
-	//metrics
-	//go monitoring.StartMetricsServer(cfg)
-
-	// usecase
 	usecase := usecase.New(repository.New(pg), smtp.New(cfg.Smtp))
 
 	botAPI, err := telegram.New(cfg.Bot.Token)
@@ -37,7 +33,6 @@ func Run(cfg *config.Config) {
 	bot := handler.New(botAPI, l, usecase, cfg.Bot.AdminID)
 	l.Info().Msg("Bot initialized")
 
-	// worker
 	worker := worker.New(usecase, l, cfg.Scheduler, bot)
 	worker.Start()
 	defer worker.Stop()
