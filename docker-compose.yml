@@ -1,7 +1,38 @@
 services:
-  mailhog:
-    image: mailhog/mailhog
-    container_name: mailhog
-    ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # Web UI
+  bot:
+    image: epicpt/bot_question:latest
+    container_name: bot_question
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    restart: always
+
+  migrate:
+    image: migrate/migrate
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: [ "-path", "/migrations", "-database", "${POSTGRES_URL}", "up" ]
+    volumes:
+      - ./migrations:/migrations
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_bot_question
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+volumes:
+  postgres_data:
