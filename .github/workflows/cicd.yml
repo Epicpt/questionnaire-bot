@@ -56,8 +56,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /opt/projects/bot_question
-            docker-compose pull bot_question
-            docker-compose up -d --build bot_question
+            docker-compose pull bot
+            docker-compose up -d --build bot
 
   deploy-compose:
     name: Update docker-compose on server
