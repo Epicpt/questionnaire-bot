@@ -65,6 +65,10 @@ func (t *BotHandler) Update(update tgbotapi.Update) {
 		if errors.Is(err, usecase.ErrUserNotFound) {
 			user = entity.New(update.Message.From.ID, update.Message.Chat.ID, update.Message.From.FirstName, update.Message.From.LastName, update.Message.From.UserName)
 			t.l.Info().Int64("id", user.TgID).Msgf("Новый пользователь %s!", user.Username)
+
+			if err = t.u.SaveUser(user); err != nil {
+				t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
+			}
 		} else {
 			t.l.Warn().Err(err).Int64("id", update.Message.From.ID).Str("user", update.Message.From.FirstName).Msg("failed get user from DB")
 		}
