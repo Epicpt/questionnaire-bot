@@ -25,7 +25,7 @@ type BotHandler struct {
 	Bot     telegram.Telegram
 	l       zerolog.Logger
 	u       usecase.Usecase
-	adminID int64
+	adminID int64 // todo: переделать в структуру cfg Managers, admin
 }
 
 func New(bot telegram.Telegram, l zerolog.Logger, u usecase.Usecase, adminID int64) *BotHandler {

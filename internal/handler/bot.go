@@ -6,89 +6,10 @@ import (
 	"time"
 )
 
-type Question struct {
-	Key             string
-	Short           string
-	Text            string
-	Options         []string
-	Validator       func(string) error
-	SpecialKeyboard string
-}
-
-const (
-	remindTime  = time.Hour
-	NotRemind   = 2 // dont send notification
-	StartRemind = 0
-
-	BackButton  = "⬅️ Назад"
-	StartButton = "/start"
-
-	requestPhone = "request_phone"
-
-	completedText = "Вы уже завершили анкету. Напишите /start, чтобы пройти заново."
-	finishText    = "Спасибо! Вы прошли все вопросы. Менеджер свяжется с Вами в ближайшее время"
-)
-
-var (
-	objectOpt     = []string{"Дом", "Квартира", "Коммерческая недвижимость", "Комната/кухня/другое помещение"}
-	renovationOpt = []string{"Капитальный (новостройка в бетоне)", "Капитальный (вторичка)", "Косметический (вторичка)"}
-	equipmentOpt  = []string{"Да", "Нет"}
-	connectionOpt = []string{"Телефонный звонок", "Написать в WhatsApp"}
-)
-var Questions = []Question{
-	{
-		Key: "name", Text: `Давайте познакомимся.
-Уточните пожалуйста как Вас зовут?`,
-		Validator: ValidateName,
-		Short:     "Имя",
-	},
-	{
-		Key: "object", Text: `Что у вас за объект?`,
-		Options: objectOpt,
-		Short:   "Вид объекта",
-	},
-	{
-		Key: "area", Text: `Какая площадь объекта?`,
-		Validator: ValidateArea,
-		Short:     "Площадь",
-	},
-	{
-		Key: "city", Text: `В каком городе находится объект?`,
-		Validator: ValidateCity,
-		Short:     "Город",
-	},
-	{
-		Key: "renovation", Text: `Какой ремонт потребуется?`,
-		Options: renovationOpt,
-		Short:   "Вид ремонта",
-	},
-	{
-		Key: "equipment", Text: `Нужна ли будет комплектация объекта во время ремонта?
-
-Комплектация - это подбор мебели, светильников, декора, а также закупка всего необходимого для ремонта (сантехника, материалы, мебель, светильники и т.д.)`,
-		Options: equipmentOpt,
-		Short:   "Необходима комплектация",
-	},
-	{
-		Key: "connection", Text: `Для уточнения дополнительных деталей проекта, рекомендуем связаться с нашим менеджером, чтобы подробно обсудить будущий дизайн-проект
-	
-	Какой способ связи для вас наиболее удобный?`,
-		Options: connectionOpt,
-		Short:   "Способ связи",
-	},
-	{
-		Key: "phone", Text: `Оставьте свой номер телефона и наш менеджер свяжется с Вами в ближайшее время`,
-		Validator:       ValidatePhone,
-		SpecialKeyboard: requestPhone,
-		Short:           "Номер телефона",
-	},
-}
-
-func remindUser(user *entity.User) *entity.User {
+func remindUser(user *entity.User) {
 	now := time.Now().UTC()
 	user.RemindStage = StartRemind
 	user.RemindAt = now.Add(remindTime)
-	return user
 }
 
 func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
@@ -97,7 +18,7 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		user.CurrentStep = 0
 		user.IsCompleted = false // для повторного прохождения
 
-		user = remindUser(user)
+		remindUser(user)
 
 		t.SendNextQuestion(user)
 		return
@@ -111,7 +32,7 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 	if text == BackButton && user.CurrentStep >= 1 {
 		user.CurrentStep--
 
-		user = remindUser(user)
+		remindUser(user)
 
 		t.SendNextQuestion(user)
 		return
@@ -126,8 +47,9 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 	q := Questions[step]
 
 	var err error
+	ans := new(Answer)
 	if q.Options != nil {
-		err = ValidateChoose(text, q.Options)
+		ans, err = ValidateChoose(text, q.Options)
 	} else {
 		err = q.Validator(text)
 	}
@@ -136,14 +58,24 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		return
 	}
 
-	answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: step, UserAnswer: text, Short: q.Short}
-	if err := t.u.SaveAnswer(answer); err != nil {
-		t.l.Err(err).Msg("failed to save answer")
-		t.SendToAdmin(adminMessage())
-		return
+	if ans != nil {
+		answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: step, UserAnswer: ans.Text, Short: q.Short, TechName: ans.TechName}
+		if err := t.u.SaveAnswer(answer); err != nil {
+			t.l.Err(err).Msg("failed to save answer")
+			t.SendToAdmin(adminMessage())
+			return
+		}
+
+		t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
+
+		if ans.Trigger != "" {
+			// todo: логика отправки уведомления менеджерам
+		}
 	}
 
-	t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
+	if q.UniqueNextMessage != "" {
+		// todo: функция func(string) error с проверками на какое сообщение со своей логикой
+	}
 
 	t.AdvanceStep(user)
 }
@@ -170,7 +102,7 @@ func (t *BotHandler) ProcessContact(user *entity.User, phone string) {
 func (t *BotHandler) AdvanceStep(user *entity.User) {
 	user.CurrentStep++
 
-	user = remindUser(user)
+	remindUser(user)
 
 	if user.CurrentStep >= len(Questions) {
 		t.FinishSurvey(user)

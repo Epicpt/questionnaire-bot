@@ -27,6 +27,7 @@ type (
 		Step        int
 		UserAnswer  string
 		CreatedAt   time.Time
+		TechName    string
 	}
 
 	Email struct {

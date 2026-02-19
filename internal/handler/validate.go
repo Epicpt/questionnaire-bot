@@ -116,11 +116,11 @@ var (
 	}
 )
 
-func ValidateChoose(s string, options []string) error {
+func ValidateChoose(s string, options []Answer) (*Answer, error) {
 	for _, opt := range options {
-		if s == opt {
-			return nil
+		if s == opt.Text {
+			return &opt, nil
 		}
 	}
-	return ChooseErr
+	return nil, ChooseErr
 }

@@ -1,6 +1,7 @@
 services:
   bot:
-    image: epicpt/bot_question:latest
+#    image: epicpt/bot_question:latest
+    build: .
     container_name: bot_question
     depends_on:
       migrate:
@@ -23,6 +24,8 @@ services:
   postgres:
     image: postgres:latest
     container_name: postgres_bot_question
+    ports:
+      - "5432:5432"
     env_file:
       - .env
     volumes:
