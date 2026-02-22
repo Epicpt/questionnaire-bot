@@ -45,8 +45,13 @@ var Questions = []Question{
 	},
 	{
 		Key: "q_5", Text: `На какой вы сейчас стадии?`,
-		Options:           q5Opt,
-		Short:             "Стадия ремонта",
+		Options: q5Opt,
+		Short:   "Стадия ремонта",
+	},
+	{
+		Key: "ready_combo", Text: `Отлично! Ваша диагностика завершена. 
+Отчет о вашей готовности к ремонту и персональная карта рисков ГОТОВЫ!`,
+		Short:             "Опрос завершен",
 		UniqueNextMessage: combo,
 	},
 

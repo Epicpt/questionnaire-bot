@@ -160,7 +160,7 @@ func (_m *MockHandler) SendToAdmin(_a0 string) {
 	_m.Called(_a0)
 }
 
-// MockHandler_SendToAdmin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendToAdmin'
+// MockHandler_SendToAdmin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendTo'
 type MockHandler_SendToAdmin_Call struct {
 	*mock.Call
 }
@@ -168,7 +168,7 @@ type MockHandler_SendToAdmin_Call struct {
 // SendToAdmin is a helper method to define mock.On call
 //   - _a0 string
 func (_e *MockHandler_Expecter) SendToAdmin(_a0 interface{}) *MockHandler_SendToAdmin_Call {
-	return &MockHandler_SendToAdmin_Call{Call: _e.mock.On("SendToAdmin", _a0)}
+	return &MockHandler_SendToAdmin_Call{Call: _e.mock.On("SendTo", _a0)}
 }
 
 func (_c *MockHandler_SendToAdmin_Call) Run(run func(_a0 string)) *MockHandler_SendToAdmin_Call {

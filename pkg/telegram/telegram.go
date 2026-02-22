@@ -9,6 +9,7 @@ type Telegram interface {
 	GetUpdatesChan(tgbotapi.UpdateConfig) tgbotapi.UpdatesChannel
 	NewMessage(int64, string) tgbotapi.MessageConfig
 	NewUpdate(int) tgbotapi.UpdateConfig
+	NewDocument(chatID int64, file tgbotapi.RequestFileData) tgbotapi.DocumentConfig
 }
 
 type Bot struct {
@@ -36,4 +37,7 @@ func (b *Bot) Send(c tgbotapi.Chattable) (tgbotapi.Message, error) {
 }
 func (b *Bot) NewMessage(chatID int64, text string) tgbotapi.MessageConfig {
 	return tgbotapi.NewMessage(chatID, text)
+}
+func (b *Bot) NewDocument(chatID int64, file tgbotapi.RequestFileData) tgbotapi.DocumentConfig {
+	return tgbotapi.NewDocument(chatID, file)
 }

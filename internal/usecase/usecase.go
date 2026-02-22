@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"questionnaire-bot/internal/entity"
+	"questionnaire-bot/internal/messages"
 	"questionnaire-bot/internal/repository"
 	"questionnaire-bot/pkg/smtp"
 )
@@ -15,6 +16,7 @@ type Usecase interface {
 	SendEmail(*entity.Email) error
 	UpdateEmailStatus(*entity.Email, string) error
 	GetUsersForNotify() ([]entity.User, error)
+	GetComboMessage(id int64) (*messages.Combo, *messages.PersonalAdvice, error)
 }
 
 type BotService struct {

@@ -14,8 +14,13 @@ type Config struct {
 }
 
 type Bot struct {
-	Token   string `env-required:"true" env:"TELEGRAM_BOT_TOKEN"`
-	AdminID int64  `env-required:"true" env:"TELEGRAM_ADMIN_ID"`
+	Token         string `env-required:"true" env:"TELEGRAM_BOT_TOKEN"`
+	EmployeesData EmployeesData
+}
+
+type EmployeesData struct {
+	AdminID    int64    `env-required:"true" env:"TELEGRAM_ADMIN_ID"`
+	ManagerIDs []string `env-required:"true" env:"TELEGRAM_MANAGER_IDS"`
 }
 
 type SMTP struct {

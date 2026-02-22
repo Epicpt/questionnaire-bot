@@ -25,6 +25,7 @@ type Scheduler struct {
 	tickers     tickers
 	stopChannel chan struct{}
 	notifier    handler.Handler
+	empCfg      config.EmployeesData
 }
 
 type tickers struct {
@@ -33,7 +34,7 @@ type tickers struct {
 	notify      *time.Ticker
 }
 
-func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier handler.Handler) *Scheduler {
+func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier handler.Handler, empCfg config.EmployeesData) *Scheduler {
 	return &Scheduler{
 		u: u,
 		l: l,
@@ -43,6 +44,7 @@ func New(u usecase.Usecase, l zerolog.Logger, cfg config.Scheduler, notifier han
 			notify:      time.NewTicker(cfg.NotifySend)},
 		stopChannel: make(chan struct{}),
 		notifier:    notifier,
+		empCfg:      empCfg,
 	}
 }
 
@@ -122,7 +124,7 @@ func (s *Scheduler) processFailedEmails() {
 			s.l.Error().Err(err).Int("email_id", email.ID).Msg("failed to send email")
 			status = failed
 			msg := fmt.Sprintf("❗️Повторная отправка письма не удалась❗️\nВозможно SMTP сервер упал.\nID: %d", email.ID)
-			s.notifier.SendToAdmin(msg)
+			s.notifier.SendTo(s.empCfg.AdminID, msg)
 		} else {
 			s.l.Info().Int("email_id", email.ID).Msg("email sent")
 		}

@@ -60,9 +60,9 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 
 	if ans != nil {
 		answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: step, UserAnswer: ans.Text, Short: q.Short, TechName: ans.TechName}
-		if err := t.u.SaveAnswer(answer); err != nil {
+		if err := t.uc.SaveAnswer(answer); err != nil {
 			t.l.Err(err).Msg("failed to save answer")
-			t.SendToAdmin(adminMessage())
+			t.SendTo(t.ed.AdminID, adminMessage())
 			return
 		}
 
@@ -87,14 +87,18 @@ func (t *BotHandler) ProcessContact(user *entity.User, phone string) {
 		return
 	}
 	q := Questions[user.CurrentStep]
-	answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: user.CurrentStep, UserAnswer: phone, Short: q.Short}
-	if err := t.u.SaveAnswer(answer); err != nil {
+	answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: user.CurrentStep, UserAnswer: phone, Short: q.Short, TechName: "phone"}
+	if err := t.uc.SaveAnswer(answer); err != nil {
 		t.l.Err(err).Msg("failed to save answer")
-		t.SendToAdmin(adminMessage())
+		t.SendTo(t.ed.AdminID, adminMessage())
 		return
 	}
 
 	t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
+
+	if q.UniqueNextMessage != "" {
+		// todo: функция func(string) error с проверками на какое сообщение со своей логикой
+	}
 
 	t.AdvanceStep(user)
 }
@@ -121,9 +125,9 @@ func (t *BotHandler) FinishSurvey(user *entity.User) {
 	user.IsCompleted = true
 	user.RemindStage = NotRemind
 
-	if err := t.u.CreateEmail(user); err != nil {
+	if err := t.uc.CreateEmail(user); err != nil {
 		t.l.Err(err).Msg("failed to create email")
-		t.SendToAdmin(adminMessage())
+		t.SendTo(t.ed.AdminID, adminMessage())
 		return
 	}
 	user.EmailSentCnt++

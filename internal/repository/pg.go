@@ -14,6 +14,7 @@ type Repository interface {
 	GetEmailsByStatus(string) ([]entity.Email, error)
 	UpdateEmailStatus(*entity.Email, string) error
 	GetUsersForNotify() ([]entity.User, error)
+	GetUserTechNames(tgID int64) ([]entity.Answer, error)
 }
 
 type BotRepo struct {
