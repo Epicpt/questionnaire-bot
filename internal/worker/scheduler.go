@@ -3,6 +3,7 @@ package worker
 import (
 	"fmt"
 	"questionnaire-bot/internal/config"
+	"questionnaire-bot/internal/constantses"
 	"questionnaire-bot/internal/handler"
 	"questionnaire-bot/internal/usecase"
 	"time"
@@ -62,10 +63,10 @@ func (s *Scheduler) Start() {
 
 		for {
 			select {
-			case <-s.tickers.email.C:
-				s.processEmails()
-			case <-s.tickers.failedEmail.C:
-				s.processFailedEmails()
+			//case <-s.tickers.email.C:
+			//	s.processEmails()
+			//case <-s.tickers.failedEmail.C:
+			//	s.processFailedEmails()
 			case <-s.tickers.notify.C:
 				s.processNotify()
 
@@ -142,16 +143,11 @@ func (s *Scheduler) processNotify() {
 	}
 
 	for _, user := range users {
-		q := handler.Questions[user.CurrentStep]
-		msg := fmt.Sprintf("👋 Похоже, вы не закончили заполнение анкеты.\nВаш последний вопрос был:\n\n%s", q.Text)
+		q := handler.NotifyQuestion
 
-		s.notifier.Send(user.ChatID, msg, handler.KeyboardFromOptions(q, user.CurrentStep > 0))
-		user.RemindStage++
+		s.notifier.Send(user.ChatID, q.Text, handler.KeyboardFromOptions(q, handler.ShowBackButton(user.CurrentStep)))
+		user.RemindStage = constantses.NotRemind
 
-		if user.RemindStage == remindAfterDay {
-			now := time.Now().UTC()
-			user.RemindAt = now.Add(day)
-		}
 		if err = s.u.SaveUser(&user); err != nil {
 			s.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
 		}

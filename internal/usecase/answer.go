@@ -21,8 +21,8 @@ func (u *BotService) GetComboMessage(id int64) (*messages.Combo, *messages.Perso
 		return nil, nil, fmt.Errorf("BotService -> GetComboMessage -> repo.GetUserTechNames: %w", err)
 	}
 
-	if len(answers) != 5 {
-		return nil, nil, fmt.Errorf("BotService -> GetComboMessage -> len(answers) != 5")
+	if len(answers) < 5 {
+		return nil, nil, fmt.Errorf("BotService -> GetComboMessage -> len(answers) < 5")
 	}
 
 	var personalAdvice *messages.PersonalAdvice
@@ -38,9 +38,9 @@ func (u *BotService) GetComboMessage(id int64) (*messages.Combo, *messages.Perso
 	}
 
 	filtered := []string{
-		answers[0].TechName,
 		answers[1].TechName,
-		answers[4].TechName,
+		answers[2].TechName,
+		answers[5].TechName,
 	}
 	sort.Strings(filtered)
 	key := strings.Join(filtered, "|")

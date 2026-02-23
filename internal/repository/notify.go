@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	queryGetUsersForNotify = `SELECT tg_id, chat_id, first_name, last_name, username, created_at, updated_at, remind_stage,remind_at,is_completed,current_step,max_step_reached FROM users WHERE remind_at < NOW() AND remind_stage < 2 AND is_completed = false`
+	queryGetUsersForNotify = `SELECT tg_id, chat_id, first_name, last_name, username, created_at, updated_at, remind_stage,remind_at,is_completed,current_step,max_step_reached FROM users WHERE remind_at < NOW() AND remind_stage = 1 AND is_completed = false`
 )
 
 func (r *BotRepo) GetUsersForNotify() ([]entity.User, error) {

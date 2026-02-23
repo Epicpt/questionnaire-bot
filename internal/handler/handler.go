@@ -34,7 +34,8 @@ type BotHandler struct {
 }
 
 func New(bot telegram.Telegram, l zerolog.Logger, u usecase.Usecase, ed config.EmployeesData) *BotHandler {
-	return &BotHandler{Bot: bot, l: l, uc: u, ed: ed}
+	fIDs := make(map[string]string)
+	return &BotHandler{Bot: bot, l: l, uc: u, ed: ed, fileIDs: fIDs}
 }
 
 func (t *BotHandler) Start() {
@@ -118,22 +119,22 @@ func (t *BotHandler) SendDocs(chatID int64, path []string) {
 		if ok && fileID != "" {
 			doc := t.Bot.NewDocument(chatID, tgbotapi.FileID(fileID))
 			_, err := t.Bot.Send(doc)
-			if err == nil {
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Str("path", pathItem).Msg("Ошибка отправки документа через ID")
+			}
+		} else {
+			doc := t.Bot.NewDocument(chatID, tgbotapi.FilePath(pathItem))
+			msg, err := t.Bot.Send(doc)
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Msg("Ошибка отправки документа")
 				return
 			}
-			t.l.Warn().Err(err).Int64("chatID", chatID).Msg("no found file cache")
+
+			t.mu.Lock()
+			t.fileIDs[pathItem] = msg.Document.FileID
+			t.mu.Unlock()
 		}
 
-		doc := t.Bot.NewDocument(chatID, tgbotapi.FilePath(pathItem))
-		msg, err := t.Bot.Send(doc)
-		if err != nil {
-			t.l.Error().Err(err).Int64("chatID", chatID).Msg("Ошибка отправки документа")
-			return
-		}
-
-		t.mu.Lock()
-		t.fileIDs[pathItem] = msg.Document.FileID
-		t.mu.Unlock()
 	}
 }
 

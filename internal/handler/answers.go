@@ -1,9 +1,11 @@
 package handler
 
+import "questionnaire-bot/internal/constantses"
+
 type Answer struct {
 	TechName string
 	Text     string
-	Trigger  string
+	Trigger  constantses.Trigger
 }
 
 var (
@@ -37,7 +39,18 @@ var (
 		{TechName: "q5a3", Text: "Пока просто размышляю, сроки не определены."},
 	}
 	advice2Opt = []Answer{
-		{TechName: "adv2a1", Text: "Записаться на бесплатную консультацию.", Trigger: alertManagers},
+		{TechName: "adv2a1", Text: "Записаться на бесплатную консультацию.", Trigger: constantses.AppointmentAlert},
 		{TechName: "adv2a2", Text: "Нет, спасибо, пока изучаю."},
 	}
 )
+
+var NotifyAnswers = []Answer{{
+	TechName: "n_a1",
+	Text:     "Да, записаться",
+	Trigger:  constantses.AppointmentAlert,
+},
+	{
+		TechName: "n_a2",
+		Text:     "Нет, спасибо, пока изучаю",
+	},
+}

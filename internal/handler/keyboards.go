@@ -10,7 +10,7 @@ func KeyboardFromOptions(q Question, showBack bool) any {
 	var keyboard [][]tgbotapi.KeyboardButton
 
 	for _, opt := range q.Options {
-		row := tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton(opt))
+		row := tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton(opt.Text))
 		keyboard = append(keyboard, row)
 	}
 

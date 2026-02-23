@@ -19,8 +19,8 @@ type Bot struct {
 }
 
 type EmployeesData struct {
-	AdminID    int64    `env-required:"true" env:"TELEGRAM_ADMIN_ID"`
-	ManagerIDs []string `env-required:"true" env:"TELEGRAM_MANAGER_IDS"`
+	AdminID    int64   `env-required:"true" env:"TELEGRAM_ADMIN_ID"`
+	ManagerIDs []int64 `env-required:"true" env:"TELEGRAM_MANAGER_IDS"`
 }
 
 type SMTP struct {

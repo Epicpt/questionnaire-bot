@@ -1,12 +1,6 @@
 package handler
 
-import "time"
-
 const (
-	remindTime  = time.Hour
-	NotRemind   = 2 // dont send notification
-	StartRemind = 0
-
 	BackButton  = "⬅️ Назад"
 	StartButton = "/start"
 
@@ -15,10 +9,8 @@ const (
 	// unique messages
 	attachments = "attachments"
 	combo       = "combo"
-
-	// answer triggers
-	alertManagers = "alertManagers"
+	skip        = "skip"
 
 	completedText = "Вы уже завершили анкету. Напишите /start, чтобы пройти заново."
-	finishText    = "Спасибо! Вы прошли все вопросы. Менеджер свяжется с Вами в ближайшее время"
+	finishText    = "Спасибо! Вы прошли все вопросы. Записаться на консультацию можно написав нам в @solo_ds"
 )
