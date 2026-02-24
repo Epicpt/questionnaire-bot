@@ -5,7 +5,7 @@ import "questionnaire-bot/internal/constantses"
 type Answer struct {
 	TechName string
 	Text     string
-	Trigger  constantses.Trigger
+	Actions  []constantses.Action
 }
 
 var (
@@ -39,16 +39,25 @@ var (
 		{TechName: "q5a3", Text: "Пока просто размышляю, сроки не определены."},
 	}
 	advice2Opt = []Answer{
-		{TechName: "adv2a1", Text: "Записаться на бесплатную консультацию.", Trigger: constantses.AppointmentAlert},
-		{TechName: "adv2a2", Text: "Нет, спасибо, пока изучаю."},
+		{TechName: "adv2a1", Text: "Записаться на бесплатную консультацию.", Actions: []constantses.Action{
+			constantses.ActionClientSentAppointment,
+			constantses.ActionSendBookingMessage,
+		}},
+		{TechName: "adv2a2", Text: "Нет, спасибо, пока изучаю.",
+			Actions: []constantses.Action{
+				constantses.ActionSendDeclineMessage},
+		},
 	}
 )
 
-var NotifyAnswers = []Answer{{
-	TechName: "n_a1",
-	Text:     "Да, записаться",
-	Trigger:  constantses.AppointmentAlert,
-},
+var NotifyAnswers = []Answer{
+	{
+		TechName: "n_a1",
+		Text:     "Да, записаться",
+		Actions: []constantses.Action{
+			constantses.ActionClientSentAppointment,
+			constantses.ActionSendBookingMessage,
+		}},
 	{
 		TechName: "n_a2",
 		Text:     "Нет, спасибо, пока изучаю",

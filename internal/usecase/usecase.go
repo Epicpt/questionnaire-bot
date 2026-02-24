@@ -18,7 +18,7 @@ type Usecase interface {
 	UpdateEmailStatus(*entity.Email, string) error
 	GetUsersForNotify() ([]entity.User, error)
 	GetComboMessage(id int64) (*messages.Combo, *messages.PersonalAdvice, error)
-	GetManagerNotifyMessage(user *entity.User, trigger constantses.Trigger) (*string, error)
+	GetManagerNotifyMessage(user *entity.User, action constantses.Action) (*string, error)
 }
 
 type BotService struct {

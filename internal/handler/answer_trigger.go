@@ -4,24 +4,35 @@ import (
 	"fmt"
 	"questionnaire-bot/internal/constantses"
 	"questionnaire-bot/internal/entity"
+	"questionnaire-bot/internal/messages"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func (t *BotHandler) triggerMessage(user *entity.User, ans *Answer) error {
-	switch ans.Trigger {
-	case constantses.PhoneAlert:
-		return t.alertManagers(user, ans.Trigger)
-	case constantses.AppointmentAlert:
-		if ans.TechName != "adv2a1" {
-			return nil
+	for _, action := range ans.Actions {
+		switch action {
+		case constantses.ActionClientSentPhone:
+			if err := t.alertManagers(user, action); err != nil {
+				return err
+			}
+		case constantses.ActionClientSentAppointment:
+			if err := t.alertManagers(user, action); err != nil {
+				return err
+			}
+		case constantses.ActionSendBookingMessage:
+			t.Send(user.ChatID, messages.Booking, tgbotapi.NewRemoveKeyboard(true))
+		case constantses.ActionSendDeclineMessage:
+			t.Send(user.ChatID, messages.Decline, tgbotapi.NewRemoveKeyboard(true))
+		default:
+			return fmt.Errorf("handler -> triggerMessage -> wrong action: %s", ans.Actions)
 		}
-		return t.alertManagers(user, ans.Trigger)
-	default:
-		return fmt.Errorf("handler -> triggerMessage -> wrong trigger: %s", ans.Trigger)
 	}
+	return nil
 }
 
-func (t *BotHandler) alertManagers(user *entity.User, trigger constantses.Trigger) error {
-	msg, err := t.uc.GetManagerNotifyMessage(user, trigger)
+func (t *BotHandler) alertManagers(user *entity.User, action constantses.Action) error {
+	msg, err := t.uc.GetManagerNotifyMessage(user, action)
 	if err != nil {
 		return err
 	}

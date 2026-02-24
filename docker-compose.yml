@@ -1,7 +1,6 @@
 services:
   bot:
-#    image: epicpt/bot_question:latest
-    build: .
+    image: epicpt/bot_question:latest
     container_name: bot_question
     depends_on:
       migrate:

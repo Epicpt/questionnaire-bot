@@ -13,7 +13,7 @@ ON CONFLICT (user_tg_id, question_key, step) DO UPDATE SET answer = $4, tech_nam
 FROM answers
 WHERE user_tg_id = $1
 ORDER BY step ASC`
-	queryGetUserTechNames = `SELECT tech_name FROM answers WHERE user_tg_id = $1`
+	queryGetUserTechNames = `SELECT tech_name FROM answers WHERE user_tg_id = $1 ORDER BY step ASC`
 )
 
 func (r *BotRepo) SaveAnswer(ans *entity.Answer) error {

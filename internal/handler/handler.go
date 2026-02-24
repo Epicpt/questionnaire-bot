@@ -81,10 +81,10 @@ func (t *BotHandler) Update(update tgbotapi.Update) {
 
 	}
 
-	if spamCheck(user.EmailSentCnt) {
-		t.Send(user.ChatID, fmt.Sprintf("Менеджер свяжется с Вами в ближайшее время!"), nil)
-		return
-	}
+	//if spamCheck(user.EmailSentCnt) {
+	//	t.Send(user.ChatID, fmt.Sprintf("Менеджер свяжется с Вами в ближайшее время!"), nil)
+	//	return
+	//}
 
 	if update.Message.Contact != nil {
 		t.ProcessContact(user, update.Message.Contact.PhoneNumber)

@@ -1,5 +1,7 @@
 package handler
 
+import "questionnaire-bot/internal/constantses"
+
 type Question struct {
 	Key               string
 	Short             string
@@ -8,6 +10,7 @@ type Question struct {
 	Validator         func(string) error
 	SpecialKeyboard   string
 	UniqueNextMessage string
+	InputAnswer       *Answer
 }
 
 var Questions = []Question{
@@ -56,14 +59,18 @@ var Questions = []Question{
 	},
 
 	{
-		Key: "phone", Text: `Отлично, диагностика завершена! Но у нас еще остались подарки для вас! 
+		Key: "phone", Text: `Не уходите сразу, у нас еще остались подарки для вас! 
 
 Бесплатные полезные материалы которые подойдут именно вам 
 
-Чтобы получить чек-лист и гайды оставьте свой контакт - номер телефона или ТГ никнейм`,
+Чтобы получить чек-лист и гайды, оставьте свой контакт - номер телефона или ТГ никнейм`,
 		Validator:       ValidatePhone,
 		SpecialKeyboard: requestPhone,
 		Short:           "Номер телефона",
+		InputAnswer: &Answer{
+			TechName: "phone",
+			Actions:  []constantses.Action{constantses.ActionClientSentPhone},
+		},
 	},
 	{
 		Key: "materials", Text: `Спасибо! Ваши материалы уже здесь:`,

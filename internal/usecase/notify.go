@@ -11,18 +11,20 @@ func (u *BotService) GetUsersForNotify() ([]entity.User, error) {
 	return u.repo.GetUsersForNotify()
 }
 
-func (u *BotService) GetManagerNotifyMessage(user *entity.User, trigger constantses.Trigger) (*string, error) {
+func (u *BotService) GetManagerNotifyMessage(user *entity.User, action constantses.Action) (*string, error) {
 	answers, err := u.repo.GetAnswersUser(user.TgID)
 	if err != nil {
 		return nil, fmt.Errorf("BotService -> GetManagerNotifyMessage -> repo.GetAnswersUser: %w", err)
 	}
 
 	var sb strings.Builder
-	switch trigger {
-	case constantses.PhoneAlert:
+	switch action {
+	case constantses.ActionClientSentPhone:
 		sb.WriteString(fmt.Sprintf("Клиент отправил телефон для получения материалов. Клиент пока не дошел до записи на консультацию: \n\n---Внутренние данные телеграмм---\n"))
-	case constantses.AppointmentAlert:
+	case constantses.ActionClientSentAppointment:
 		sb.WriteString(fmt.Sprintf("Клиент отправил запрос на запись на консультацию: \n\n---Внутренние данные телеграмм---\n"))
+	default:
+		panic("unhandled default case")
 	}
 
 	if user.FirstName != "" {

@@ -17,6 +17,7 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 
 	if text == StartButton {
 		user.CurrentStep = 0
+		user.RemindStage = constantses.NotRemind
 		user.IsCompleted = false // для повторного прохождения
 
 		t.SendNextQuestion(user)
@@ -48,11 +49,15 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 	}
 
 	var err error
-	ans := new(Answer)
+	var ans *Answer
 	if q.Options != nil {
 		ans, err = ValidateChoose(text, q.Options)
-	} else {
+	} else if q.Validator != nil {
 		err = q.Validator(text)
+		if err == nil && q.InputAnswer != nil {
+			ans = q.InputAnswer
+			ans.Text = text
+		}
 	}
 	if err != nil {
 		t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
@@ -69,7 +74,7 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 
 		t.l.Info().Int64("tg id", answer.UserTgID).Str("username", user.Username).Str("question", answer.Short).Int("step", answer.Step).Str("answer", answer.UserAnswer).Msg("Answer success save")
 
-		if ans.Trigger != "" {
+		if ans.Actions != nil {
 			if err = t.triggerMessage(user, ans); err != nil {
 				t.SendTo(t.ed.AdminID, err.Error())
 			}
@@ -93,9 +98,7 @@ func (t *BotHandler) ProcessContact(user *entity.User, phone string) {
 		return
 	}
 
-	if err := t.triggerMessage(user, &Answer{
-		Trigger: constantses.PhoneAlert,
-	}); err != nil {
+	if err := t.alertManagers(user, constantses.ActionClientSentPhone); err != nil {
 		t.SendTo(t.ed.AdminID, err.Error())
 	}
 

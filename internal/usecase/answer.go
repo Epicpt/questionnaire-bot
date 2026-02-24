@@ -28,7 +28,6 @@ func (u *BotService) GetComboMessage(id int64) (*messages.Combo, *messages.Perso
 	var personalAdvice *messages.PersonalAdvice
 	advices := map[string]messages.PersonalAdvice{
 		"q4a2": messages.Advice1,
-		"//":   messages.Advice2, // todo ждем ответа клиента
 		"q3a2": messages.Advice3,
 	}
 	for _, a := range answers {
