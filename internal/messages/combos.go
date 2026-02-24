@@ -9,6 +9,13 @@ type (
 	PersonalAdvice string
 )
 
+var AllPaths = []string{
+	"materials/Чек-лист расходов на ремонт от Solo Design Studio.pdf",
+	"materials/Гайд ошибки в ремонте.pdf",
+	"materials/ГАЙД ПО ВЫБОРУ СТРОИТЕЛЬНОЙ БРИГАДЫ.pdf",
+	"materials/Чек-лист этапы ремонта.pdf",
+}
+
 var (
 	pathsCombo125 = []string{"materials/Чек-лист расходов на ремонт от Solo Design Studio.pdf", "materials/Гайд ошибки в ремонте.pdf"}
 	pathsCombo34  = []string{"materials/Гайд ошибки в ремонте.pdf", "materials/ГАЙД ПО ВЫБОРУ СТРОИТЕЛЬНОЙ БРИГАДЫ.pdf"}

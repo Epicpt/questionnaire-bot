@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"questionnaire-bot/internal/config"
 	"questionnaire-bot/internal/entity"
+	"questionnaire-bot/internal/messages"
 	"questionnaire-bot/internal/usecase"
 	"questionnaire-bot/pkg/telegram"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type Handler interface {
@@ -34,7 +36,12 @@ type BotHandler struct {
 }
 
 func New(bot telegram.Telegram, l zerolog.Logger, u usecase.Usecase, ed config.EmployeesData) *BotHandler {
-	fIDs := make(map[string]string)
+	fIDs := map[string]string{
+		"materials/Чек-лист расходов на ремонт от Solo Design Studio.pdf": "BQACAgIAAxkDAAIHw2md55GMTBGvBpzmpro-QNCSjGQeAAKjkAACaD_xSODCb1BcM7SkOgQ",
+		"materials/Гайд ошибки в ремонте.pdf":                            "BQACAgIAAxkDAAIHxGmd55bdP_mHs4V7kcS2CPZ110peAAKkkAACaD_xSC8XhpSX5i4qOgQ",
+		"materials/ГАЙД ПО ВЫБОРУ СТРОИТЕЛЬНОЙ БРИГАДЫ.pdf":               "BQACAgIAAxkDAAIHxWmd55mvlBJ38hWC6BQxPybj1QuZAAKlkAACaD_xSEfb0YxD0gF3OgQ",
+		"materials/Чек-лист этапы ремонта.pdf":                            "BQACAgIAAxkDAAIHxmmd55qPa_dhPGk09BK_tTybAh_1AAKmkAACaD_xSOqrUCyfYbYXOgQ",
+	}
 	return &BotHandler{Bot: bot, l: l, uc: u, ed: ed, fileIDs: fIDs}
 }
 
@@ -66,6 +73,12 @@ func (t *BotHandler) Start() {
 }
 
 func (t *BotHandler) Update(update tgbotapi.Update) {
+	// get file ids local
+	if update.Message.Text == "/f-ids-ls" {
+		log.Info().Msg("Start send docs")
+		t.SendDocs(update.Message.From.ID, messages.AllPaths)
+		return
+	}
 	user, err := t.uc.GetUser(update.Message.From.ID)
 	if err != nil {
 		if errors.Is(err, usecase.ErrUserNotFound) {
@@ -130,11 +143,11 @@ func (t *BotHandler) SendDocs(chatID int64, path []string) {
 				return
 			}
 
+			log.Info().Msgf("%s-%s", pathItem, msg.Document.FileID)
 			t.mu.Lock()
 			t.fileIDs[pathItem] = msg.Document.FileID
 			t.mu.Unlock()
 		}
-
 	}
 }
 
