@@ -24,10 +24,10 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		return
 	}
 
-	//if user.IsCompleted {
-	//	t.Send(user.ChatID, completedText, nil) // для повторного прохождения
-	//	return
-	//}
+	if user.IsCompleted {
+		//t.Send(user.ChatID, completedText, nil) // для повторного прохождения
+		return
+	}
 
 	if text == BackButton && user.CurrentStep >= 1 {
 		user.CurrentStep--
