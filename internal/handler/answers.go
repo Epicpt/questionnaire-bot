@@ -60,6 +60,8 @@ var NotifyAnswers = []Answer{
 		}},
 	{
 		TechName: "n_a2",
-		Text:     "Нет, спасибо, пока изучаю",
+		Text:     "Нет, спасибо",
+		Actions: []constantses.Action{
+			constantses.ActionSendDeclineMessage},
 	},
 }

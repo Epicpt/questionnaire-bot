@@ -24,10 +24,10 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		return
 	}
 
-	if user.IsCompleted {
-		t.Send(user.ChatID, completedText, nil) // для повторного прохождения
-		return
-	}
+	//if user.IsCompleted {
+	//	t.Send(user.ChatID, completedText, nil) // для повторного прохождения
+	//	return
+	//}
 
 	if text == BackButton && user.CurrentStep >= 1 {
 		user.CurrentStep--
@@ -36,13 +36,23 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		return
 	}
 
-	step := user.CurrentStep
-	if step >= len(Questions) {
-		t.FinishSurvey(user)
-		return
+	var q *Question
+
+	for _, answer := range NotifyAnswers {
+		if answer.Text == text {
+			q = &NotifyQuestion
+		}
 	}
 
-	q := Questions[step]
+	if q == nil {
+		step := user.CurrentStep
+		if step >= len(Questions) {
+			t.FinishSurvey(user)
+			return
+		}
+
+		q = &Questions[step]
+	}
 
 	if q.Key == "advice_2" {
 		remindUser(user)
@@ -60,13 +70,13 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		}
 	}
 	if err != nil {
-		t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
+		t.Send(user.ChatID, fmt.Sprintf("%v", err), KeyboardFromOptions(*q, ShowBackButton(user.CurrentStep)))
 		return
 	}
 
 	if ans != nil {
-		answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: step, UserAnswer: ans.Text, Short: q.Short, TechName: ans.TechName}
-		if err := t.uc.SaveAnswer(answer); err != nil {
+		answer := &entity.Answer{UserTgID: user.TgID, QuestionKey: q.Key, Step: user.CurrentStep, UserAnswer: ans.Text, Short: q.Short, TechName: ans.TechName}
+		if err = t.uc.SaveAnswer(answer); err != nil {
 			t.l.Err(err).Int64("userTgID", user.TgID).Str("text", text).Msg("failed to save answer")
 			t.SendTo(t.ed.AdminID, adminPGErrorMessage())
 			return
@@ -125,7 +135,7 @@ func (t *BotHandler) SendNextQuestion(user *entity.User) {
 
 	if q.UniqueNextMessage != "" {
 		if err := t.uniqueNextMessage(user, q.UniqueNextMessage); err != nil {
-			t.SendTo(t.ed.AdminID, fmt.Sprintf("tgID: %d, name: %s, username: %s, error:%w", user.TgID, user.FirstName, user.Username, err.Error()))
+			t.SendTo(t.ed.AdminID, fmt.Sprintf("tgID: %d, name: %s, username: %s, error:%s", user.TgID, user.FirstName, user.Username, err.Error()))
 		}
 		t.AdvanceStep(user)
 	}
