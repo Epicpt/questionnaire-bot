@@ -10,6 +10,8 @@ type Telegram interface {
 	NewMessage(int64, string) tgbotapi.MessageConfig
 	NewUpdate(int) tgbotapi.UpdateConfig
 	NewDocument(chatID int64, file tgbotapi.RequestFileData) tgbotapi.DocumentConfig
+	NewPhoto(chatID int64, photo tgbotapi.RequestFileData) tgbotapi.PhotoConfig
+	NewAnimation(chatID int64, file tgbotapi.RequestFileData) tgbotapi.AnimationConfig
 }
 
 type Bot struct {
@@ -40,4 +42,11 @@ func (b *Bot) NewMessage(chatID int64, text string) tgbotapi.MessageConfig {
 }
 func (b *Bot) NewDocument(chatID int64, file tgbotapi.RequestFileData) tgbotapi.DocumentConfig {
 	return tgbotapi.NewDocument(chatID, file)
+}
+
+func (b *Bot) NewPhoto(chatID int64, photo tgbotapi.RequestFileData) tgbotapi.PhotoConfig {
+	return tgbotapi.NewPhoto(chatID, photo)
+}
+func (b *Bot) NewAnimation(chatID int64, file tgbotapi.RequestFileData) tgbotapi.AnimationConfig {
+	return tgbotapi.NewAnimation(chatID, file)
 }

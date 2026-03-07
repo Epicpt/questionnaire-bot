@@ -23,7 +23,12 @@ func (t *BotHandler) comboMessage(id int64, chatID int64) error {
 	if err != nil {
 		return err
 	}
-	t.Send(chatID, data.Text, nil)
+	if data.Photo.Type == entity.Jpeg {
+		t.SendPhoto(chatID, data.Photo.Paths, data.Text, nil)
+	}
+	if data.Photo.Type == entity.Animation {
+		t.SendAnimation(chatID, data.Photo.Paths, data.Text, nil)
+	}
 
 	if advice != nil {
 		t.Send(chatID, string(*advice), nil)

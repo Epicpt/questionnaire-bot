@@ -21,7 +21,8 @@ func (t *BotHandler) triggerMessage(user *entity.User, ans *Answer) error {
 				return err
 			}
 		case constantses.ActionSendBookingMessage:
-			t.Send(user.ChatID, messages.Booking, tgbotapi.NewRemoveKeyboard(true))
+			t.Send(user.ChatID, messages.Booking1, tgbotapi.NewRemoveKeyboard(true))
+			t.SendAnimation(user.ChatID, []string{"materials/congrats-congrats-gif.mp4"}, messages.Booking2, nil)
 		case constantses.ActionSendDeclineMessage:
 			t.Send(user.ChatID, messages.Decline, tgbotapi.NewRemoveKeyboard(true))
 		default:

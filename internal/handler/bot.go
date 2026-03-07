@@ -29,7 +29,7 @@ func (t *BotHandler) ProcessMessage(user *entity.User, text string) {
 		return
 	}
 
-	if text == BackButton && user.CurrentStep >= 1 {
+	if text == BackButton && user.CurrentStep >= 1 && user.CurrentStep < 6 {
 		user.CurrentStep--
 
 		t.SendNextQuestion(user)
@@ -131,7 +131,17 @@ func (t *BotHandler) AdvanceStep(user *entity.User) {
 
 func (t *BotHandler) SendNextQuestion(user *entity.User) {
 	q := Questions[user.CurrentStep]
-	t.Send(user.ChatID, q.Text, KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
+
+	if q.Photo != nil {
+		if q.Photo.Type == entity.Jpeg {
+			t.SendPhoto(user.ChatID, q.Photo.Paths, q.Text, KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
+		}
+		if q.Photo.Type == entity.Animation {
+			t.SendAnimation(user.ChatID, q.Photo.Paths, q.Text, KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
+		}
+	} else {
+		t.Send(user.ChatID, q.Text, KeyboardFromOptions(q, ShowBackButton(user.CurrentStep)))
+	}
 
 	if q.UniqueNextMessage != "" {
 		if err := t.uniqueNextMessage(user, q.UniqueNextMessage); err != nil {

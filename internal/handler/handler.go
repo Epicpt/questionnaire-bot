@@ -36,13 +36,7 @@ type BotHandler struct {
 }
 
 func New(bot telegram.Telegram, l zerolog.Logger, u usecase.Usecase, ed config.EmployeesData) *BotHandler {
-	fIDs := map[string]string{
-		"materials/Чек-лист расходов на ремонт от Solo Design Studio.pdf": "BQACAgIAAxkDAAIHw2md55GMTBGvBpzmpro-QNCSjGQeAAKjkAACaD_xSODCb1BcM7SkOgQ",
-		"materials/Гайд ошибки в ремонте.pdf":                            "BQACAgIAAxkDAAIHxGmd55bdP_mHs4V7kcS2CPZ110peAAKkkAACaD_xSC8XhpSX5i4qOgQ",
-		"materials/ГАЙД ПО ВЫБОРУ СТРОИТЕЛЬНОЙ БРИГАДЫ.pdf":               "BQACAgIAAxkDAAIHxWmd55mvlBJ38hWC6BQxPybj1QuZAAKlkAACaD_xSEfb0YxD0gF3OgQ",
-		"materials/Чек-лист этапы ремонта.pdf":                            "BQACAgIAAxkDAAIHxmmd55qPa_dhPGk09BK_tTybAh_1AAKmkAACaD_xSOqrUCyfYbYXOgQ",
-	}
-	return &BotHandler{Bot: bot, l: l, uc: u, ed: ed, fileIDs: fIDs}
+	return &BotHandler{Bot: bot, l: l, uc: u, ed: ed, fileIDs: messages.FIDs}
 }
 
 func (t *BotHandler) Start() {
@@ -75,8 +69,9 @@ func (t *BotHandler) Start() {
 func (t *BotHandler) Update(update tgbotapi.Update) {
 	// get file ids local
 	if update.Message.Text == "/f-ids-ls" {
-		log.Info().Msg("Start send docs")
-		t.SendDocs(update.Message.From.ID, messages.AllPaths)
+		//log.Info().Msg("Start send docs")
+		//t.SendDocs(update.Message.From.ID, messages.AllPathsDocs)
+		//t.SendPhoto(update.Message.From.ID, messages.AllPathsPhotos, "", nil)
 		return
 	}
 	user, err := t.uc.GetUser(update.Message.From.ID)
@@ -87,9 +82,11 @@ func (t *BotHandler) Update(update tgbotapi.Update) {
 
 			if err = t.uc.SaveUser(user); err != nil {
 				t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
+				t.SendTo(t.ed.AdminID, adminPGErrorMessage())
 			}
 		} else {
 			t.l.Warn().Err(err).Int64("id", update.Message.From.ID).Str("user", update.Message.From.FirstName).Msg("failed get user from DB")
+			t.SendTo(t.ed.AdminID, adminPGErrorMessage())
 		}
 
 	}
@@ -109,6 +106,7 @@ func (t *BotHandler) Update(update tgbotapi.Update) {
 
 	if err = t.uc.SaveUser(user); err != nil {
 		t.l.Error().Err(err).Int64("id", user.TgID).Msg("Ошибка при сохранении пользователя")
+		t.SendTo(t.ed.AdminID, adminPGErrorMessage())
 	}
 
 }
@@ -123,6 +121,73 @@ func (t *BotHandler) Send(chatID int64, text string, keyboard any) {
 	}
 }
 
+func (t *BotHandler) SendPhoto(chatID int64, path []string, text string, keyboard any) {
+	for _, pathItem := range path {
+		t.mu.RLock()
+		fileID, ok := t.fileIDs[pathItem]
+		t.mu.RUnlock()
+
+		if ok && fileID != "" {
+			photo := t.Bot.NewPhoto(chatID, tgbotapi.FileID(fileID))
+			photo.Caption = text
+			photo.ParseMode = "HTML"
+			photo.ReplyMarkup = keyboard
+			_, err := t.Bot.Send(photo)
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Str("path", pathItem).Msg("Ошибка отправки фото через ID")
+			}
+		} else {
+			photo := t.Bot.NewPhoto(chatID, tgbotapi.FilePath(pathItem))
+			photo.Caption = text
+			photo.ParseMode = "HTML"
+			photo.ReplyMarkup = keyboard
+			msg, err := t.Bot.Send(photo)
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Msg("Ошибка отправки фото")
+				return
+			}
+
+			log.Info().Msgf("%s-%s", pathItem, msg.Photo[0].FileID)
+			t.mu.Lock()
+			t.fileIDs[pathItem] = msg.Photo[0].FileID
+			t.mu.Unlock()
+		}
+	}
+}
+
+func (t *BotHandler) SendAnimation(chatID int64, path []string, text string, keyboard any) {
+	for _, pathItem := range path {
+		t.mu.RLock()
+		fileID, ok := t.fileIDs[pathItem]
+		t.mu.RUnlock()
+
+		if ok && fileID != "" {
+			anime := t.Bot.NewAnimation(chatID, tgbotapi.FileID(fileID))
+			anime.Caption = text
+			anime.ParseMode = "HTML"
+			anime.ReplyMarkup = keyboard
+			_, err := t.Bot.Send(anime)
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Str("path", pathItem).Msg("Ошибка отправки анимации через ID")
+			}
+		} else {
+			anime := t.Bot.NewAnimation(chatID, tgbotapi.FileID(pathItem))
+			anime.Caption = text
+			anime.ParseMode = "HTML"
+			anime.ReplyMarkup = keyboard
+			msg, err := t.Bot.Send(anime)
+			if err != nil {
+				t.l.Error().Err(err).Int64("chatID", chatID).Msg("Ошибка отправки анимации")
+				return
+			}
+
+			log.Info().Msgf("%s-%s", pathItem, msg.Animation.FileID)
+			t.mu.Lock()
+			t.fileIDs[pathItem] = msg.Animation.FileID
+			t.mu.Unlock()
+		}
+	}
+}
 func (t *BotHandler) SendDocs(chatID int64, path []string) {
 	for _, pathItem := range path {
 		t.mu.RLock()
