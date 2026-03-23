@@ -9,7 +9,7 @@ services:
       - .env
     volumes:
       - ./materials:/materials
-    network_mode: "service:amneziawg"
+    network_mode: "service:amneziawg_q"
     restart: always
 
   migrate:
@@ -43,7 +43,7 @@ services:
     networks:
       - app_network_q
 
-  amneziawg:
+  amneziawg_q:
    image: docker-amneziawg:local
    container_name: amneziawg
    ports:
