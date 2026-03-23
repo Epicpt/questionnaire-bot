@@ -45,7 +45,7 @@ services:
 
   amneziawg_q:
    image: docker-amneziawg:local
-   container_name: amneziawg
+   container_name: amneziawg_q
    ports:
     - 51820:51820/udp
    cap_add:
